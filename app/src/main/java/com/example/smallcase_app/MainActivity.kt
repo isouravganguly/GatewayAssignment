@@ -13,9 +13,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.smallcase_app.ui.theme.Smallcase_appTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 
+// Define your API service
+interface ApiService {
+    @GET("/your/endpoint")
+    suspend fun fetchData(): Map<String, Any>
+}
 
 class MainActivity : ComponentActivity() {
+    private val apiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.example.com")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +46,7 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     HomeScreen(
                         onOpenBrowser = { launchCustomTab() },
+                        onCallApi = { performApiCall() }
                     )
                 }
             }
@@ -51,10 +71,33 @@ class MainActivity : ComponentActivity() {
         customTabsIntent.launchUrl(this, Uri.parse(url))
     }
 
+    private fun performApiCall() {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val result = withContext(Dispatchers.IO) { apiService.fetchData() }
+                showDialog("API Response", result.toString())
+            } catch (e: Exception) {
+                showDialog("Error", e.localizedMessage ?: "Unknown error")
+            }
+        }
+    }
+
 
 @Composable
-fun HomeScreen(onOpenBrowser: () -> Unit) {
+fun HomeScreen(onOpenBrowser: () -> Unit, onCallApi: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Button(onClick = onOpenBrowser, modifier = Modifier.fillMaxWidth()) {
             Text("Open In App Browser")
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onCallApi, modifier = Modifier.fillMaxWidth()) {
+            Text("Call API")
+        }
+    }
 }
