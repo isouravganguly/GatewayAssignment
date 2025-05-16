@@ -1,6 +1,9 @@
 # Smallcase Android Assignment
 A native Android application built with Kotlin and Jetpack Compose that demonstrates deep linking and API integration capabilities.
 
+## Demo
+![App Demo](readmeAsset/demo.gif)
+
 ## Features
 ### 1. Home Screen
 - Two main buttons:
